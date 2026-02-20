@@ -1,0 +1,11 @@
+{
+  "packId": "snap-illinois-fy2026-v1",
+  "program": "SNAP",
+  "jurisdiction": "IL",
+  "version": "1",
+  "effectiveDate": "2025-10-01",
+  "expirationDate": "2026-09-30",
+  "federalBasis": "7 CFR Part 273",
+  "stateManualUrl": "https://www.dhs.state.il.us/page.aspx?item=4107",
+  "createdAt": "2026-02-20T00:00:00Z"
+}

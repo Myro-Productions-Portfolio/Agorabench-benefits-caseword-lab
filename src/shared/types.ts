@@ -18,6 +18,18 @@ export interface EventRecord {
   actor: string;
   action: EventAction;
   payload: Record<string, unknown> | null;
+  citations: string[] | null;
+  artifactId: string | null;
+  createdAt: string;
+}
+
+export interface ArtifactRecord {
+  id: string;
+  caseId: string;
+  eventId: string;
+  type: string;
+  content: Record<string, unknown>;
+  citations: string[];
   createdAt: string;
 }
 

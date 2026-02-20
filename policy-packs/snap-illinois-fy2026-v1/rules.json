@@ -1,0 +1,176 @@
+{
+  "incomeTests": {
+    "grossIncomeTest": {
+      "ruleId": "ELIG-GROSS-001",
+      "description": "Gross income must not exceed threshold for household size",
+      "appliesTo": "non-elderly-non-disabled",
+      "thresholdPctFpl": 165,
+      "thresholdPctFplWithQM": 200,
+      "exemptIfCategoricallyEligible": true,
+      "citation": "7 CFR 273.9; IL BBCE Policy"
+    },
+    "netIncomeTest": {
+      "ruleId": "ELIG-NET-001",
+      "description": "Net income must not exceed 100% FPL for household size",
+      "appliesTo": "all",
+      "thresholdPctFpl": 100,
+      "citation": "7 CFR 273.9"
+    }
+  },
+  "resourceLimits": {
+    "standard": {
+      "ruleId": "ELIG-RES-001",
+      "limit": 3000,
+      "appliesTo": "non-qm",
+      "citation": "7 CFR 273.8; IL BBCE"
+    },
+    "withQualifyingMember": {
+      "ruleId": "ELIG-RES-002",
+      "limit": 4500,
+      "appliesTo": "with-qm",
+      "citation": "7 CFR 273.8; IL BBCE"
+    }
+  },
+  "fplTable": {
+    "ruleId": "ELIG-FPL-001",
+    "fiscalYear": "FY2026",
+    "citation": "HHS Poverty Guidelines 2025",
+    "monthlyByHouseholdSize": {
+      "1": 1305, "2": 1763, "3": 2221, "4": 2680,
+      "5": 3138, "6": 3596, "7": 4055, "8": 4513
+    },
+    "additionalMember": 459
+  },
+  "maxAllotments": {
+    "ruleId": "BEN-ALLOT-001",
+    "fiscalYear": "FY2026",
+    "citation": "FNS Thrifty Food Plan FY2026",
+    "monthlyByHouseholdSize": {
+      "1": 298, "2": 546, "3": 785, "4": 994,
+      "5": 1183, "6": 1421, "7": 1571, "8": 1789,
+      "9": 2007, "10": 2225
+    },
+    "additionalMember": 218,
+    "minimumBenefit": 24,
+    "minimumBenefitAppliesTo": [1, 2]
+  },
+  "deductions": {
+    "standard": {
+      "ruleId": "DED-STD-001",
+      "citation": "7 CFR 273.9(d)(1); IL WAG 25-03-02",
+      "byHouseholdSize": {
+        "1": 205, "2": 205, "3": 205, "4": 219, "5": 257, "6": 295
+      },
+      "sixPlusAppliesTo": "6+"
+    },
+    "earnedIncome": {
+      "ruleId": "DED-EARN-001",
+      "rate": 0.20,
+      "citation": "7 CFR 273.9(d)(2)"
+    },
+    "medical": {
+      "ruleId": "DED-MED-001",
+      "threshold": 35,
+      "appliesTo": "elderly-or-disabled-only",
+      "standardGroupHome": 485,
+      "standardCommunity": 185,
+      "citation": "7 CFR 273.9(d)(3); IL Policy"
+    },
+    "dependentCare": {
+      "ruleId": "DED-DEP-001",
+      "citation": "7 CFR 273.9(d)(4)"
+    },
+    "childSupport": {
+      "ruleId": "DED-CS-001",
+      "type": "deduction",
+      "citation": "7 CFR 273.9(d)(5); IL state option"
+    },
+    "excessShelter": {
+      "ruleId": "DED-SHLT-001",
+      "incomeMultiplier": 0.50,
+      "cap": 744,
+      "capWaivedFor": "elderly-or-disabled",
+      "citation": "7 CFR 273.9(d)(6)"
+    },
+    "homelessShelter": {
+      "ruleId": "DED-HMLS-001",
+      "standardAmount": 199,
+      "citation": "7 CFR 273.9(d)(6); IL policy"
+    }
+  },
+  "utilityAllowances": {
+    "ruleId": "SUA-001",
+    "citation": "IL WAG 25-03-02",
+    "tiers": {
+      "heatingCooling": 546,
+      "limitedUtility": 457,
+      "singleUtility": 78,
+      "telephoneOnly": 67
+    }
+  },
+  "benefitFormula": {
+    "ruleId": "BEN-CALC-001",
+    "contributionRate": 0.30,
+    "formula": "max_allotment - (0.30 * net_income)",
+    "roundDirection": "down",
+    "minimumIssuance": 10,
+    "citation": "7 CFR 273.10"
+  },
+  "incomeConversion": {
+    "ruleId": "INC-CONV-001",
+    "weeklyMultiplier": 4.3,
+    "biweeklyMultiplier": 2.15,
+    "citation": "7 CFR 273.10(c)"
+  },
+  "verification": {
+    "mandatory": {
+      "ruleId": "VER-MAND-001",
+      "items": ["identity", "ssn", "gross_nonexempt_income", "immigration_status", "residency"],
+      "citation": "7 CFR 273.2(f)(1)"
+    },
+    "conditional": {
+      "ruleId": "VER-COND-001",
+      "items": ["disability", "student_status", "deductible_expenses", "household_composition", "resources"],
+      "citation": "7 CFR 273.2(f)(4)"
+    },
+    "responseDeadlineMinDays": 10,
+    "failureVsRefusalDistinction": true
+  },
+  "noticeRequirements": {
+    "approval": {
+      "ruleId": "NOT-APPR-001",
+      "requiredFields": [
+        "benefit_amount", "certification_period", "calculation_basis",
+        "fair_hearing_rights", "office_phone", "contact_person",
+        "legal_representation", "reporting_obligations", "reapply_notice"
+      ],
+      "citation": "7 CFR 273.10"
+    },
+    "denial": {
+      "ruleId": "NOT-DENY-001",
+      "requiredFields": [
+        "action_taken", "specific_reason", "fair_hearing_rights",
+        "office_phone", "contact_person", "legal_representation"
+      ],
+      "citation": "7 CFR 273.10"
+    },
+    "adverseAction": {
+      "ruleId": "NOT-ADV-001",
+      "requiredFields": [
+        "proposed_action", "reason", "fair_hearing_rights",
+        "office_phone", "contact_person", "continued_benefits_notice",
+        "overpayment_liability", "legal_representation"
+      ],
+      "advanceNoticeDays": 10,
+      "citation": "7 CFR 273.13(a)"
+    },
+    "verificationRequest": {
+      "ruleId": "NOT-VER-001",
+      "requiredFields": [
+        "specific_missing_verification", "deadline", "consequences",
+        "agency_assistance_obligation", "failure_vs_refusal_explanation"
+      ],
+      "citation": "7 CFR 273.2(f),(h)"
+    }
+  }
+}
