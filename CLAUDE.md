@@ -87,7 +87,7 @@ Data stores: Postgres (port 5436, persistent caseworld + run metadata), Redis (p
 
 ```bash
 pnpm install          # Install dependencies
-pnpm dev              # Start both client (5173) and server (3002)
+pnpm dev              # Start both client (5174) and server (3002)
 pnpm dev:client       # Vite dev server only (casework-ui)
 pnpm dev:server       # Express via tsx watch only (casework-api)
 pnpm test             # Run tests (vitest)
