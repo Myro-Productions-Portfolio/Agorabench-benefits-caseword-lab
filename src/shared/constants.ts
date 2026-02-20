@@ -28,3 +28,9 @@ export const EVENT_ACTIONS = [
   'APPEAL_FILED',
   'APPEAL_DECIDED',
 ] as const;
+
+export const ARTIFACT_TYPES = [
+  'verification_request',
+  'determination_worksheet',
+  'notice',
+] as const;
