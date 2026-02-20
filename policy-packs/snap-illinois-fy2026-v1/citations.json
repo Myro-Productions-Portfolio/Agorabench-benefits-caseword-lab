@@ -1,0 +1,46 @@
+{
+  "sources": [
+    {
+      "citationId": "CFR-273",
+      "title": "7 CFR Part 273 - Certification of Eligible Households",
+      "url": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-C/part-273",
+      "accessDate": "2026-02-20",
+      "type": "federal_regulation"
+    },
+    {
+      "citationId": "CFR-273-10",
+      "title": "7 CFR 273.10 - Determining household eligibility and benefit levels",
+      "url": "https://www.ecfr.gov/current/title-7/subtitle-B/chapter-II/subchapter-C/part-273/subpart-D/section-273.10",
+      "accessDate": "2026-02-20",
+      "type": "federal_regulation"
+    },
+    {
+      "citationId": "CFR-273-15",
+      "title": "7 CFR 273.15 - Fair hearings",
+      "url": "https://www.law.cornell.edu/cfr/text/7/273.15",
+      "accessDate": "2026-02-20",
+      "type": "federal_regulation"
+    },
+    {
+      "citationId": "IL-DHS-MANUAL",
+      "title": "Illinois DHS Cash, SNAP, and Medical Manual",
+      "url": "https://www.dhs.state.il.us/page.aspx?item=4107",
+      "accessDate": "2026-02-20",
+      "type": "state_manual"
+    },
+    {
+      "citationId": "IL-WAG-25-03-02",
+      "title": "Illinois WAG 25-03-02 Standards Desk Aid",
+      "url": "https://www.dhs.state.il.us/page.aspx?item=21738",
+      "accessDate": "2026-02-20",
+      "type": "state_desk_aid"
+    },
+    {
+      "citationId": "FNS-FY2026-COLA",
+      "title": "SNAP FY 2026 Cost-of-Living Adjustments",
+      "url": "https://www.fns.usda.gov/snap/allotment/cola/fy26",
+      "accessDate": "2026-02-20",
+      "type": "federal_guidance"
+    }
+  ]
+}

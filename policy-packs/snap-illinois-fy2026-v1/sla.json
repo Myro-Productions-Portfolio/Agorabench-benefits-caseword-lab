@@ -1,0 +1,93 @@
+{
+  "processing": {
+    "standard": {
+      "slaId": "SLA-PROC-001",
+      "maxCalendarDays": 30,
+      "startEvent": "APPLICATION_FILED",
+      "endEvent": "DETERMINATION_MADE",
+      "citation": "7 CFR 273.2"
+    },
+    "expedited": {
+      "slaId": "SLA-EXPED-001",
+      "maxCalendarDays": 7,
+      "startEvent": "APPLICATION_FILED",
+      "endEvent": "BENEFITS_AVAILABLE",
+      "criteria": [
+        "gross_income_lt_150_and_resources_lte_100",
+        "shelter_exceeds_income_plus_resources",
+        "destitute_migrant_farmworker"
+      ],
+      "verificationRequiredBeforeIssuance": ["identity"],
+      "citation": "7 CFR 273.2(i)"
+    }
+  },
+  "verification": {
+    "responseDeadline": {
+      "slaId": "SLA-VER-001",
+      "minCalendarDays": 10,
+      "startEvent": "VERIFICATION_REQUESTED",
+      "endEvent": "VERIFICATION_RECEIVED",
+      "citation": "7 CFR 273.2(f)"
+    },
+    "postDenialRecovery30": {
+      "slaId": "SLA-VER-002",
+      "maxCalendarDays": 30,
+      "effect": "benefits_from_application_date",
+      "citation": "7 CFR 273.2"
+    },
+    "postDenialRecovery60": {
+      "slaId": "SLA-VER-003",
+      "minCalendarDays": 31,
+      "maxCalendarDays": 60,
+      "effect": "benefits_from_verification_date",
+      "citation": "7 CFR 273.2"
+    }
+  },
+  "notices": {
+    "adverseActionAdvance": {
+      "slaId": "SLA-NOT-001",
+      "minCalendarDays": 10,
+      "citation": "7 CFR 273.13"
+    }
+  },
+  "appeals": {
+    "requestDeadline": {
+      "slaId": "SLA-APP-001",
+      "maxCalendarDays": 90,
+      "startEvent": "ADVERSE_ACTION_DATE",
+      "endEvent": "APPEAL_REQUESTED",
+      "citation": "7 CFR 273.15"
+    },
+    "hearingNotice": {
+      "slaId": "SLA-APP-002",
+      "minCalendarDays": 10,
+      "beforeEvent": "HEARING_DATE",
+      "citation": "7 CFR 273.15"
+    },
+    "stateDecision": {
+      "slaId": "SLA-APP-003",
+      "maxCalendarDays": 60,
+      "startEvent": "APPEAL_REQUESTED",
+      "endEvent": "APPEAL_DECIDED",
+      "citation": "7 CFR 273.15"
+    },
+    "benefitImplementation": {
+      "slaId": "SLA-APP-004",
+      "maxCalendarDays": 10,
+      "condition": "decision_increases_benefits",
+      "citation": "7 CFR 273.15"
+    }
+  },
+  "recertification": {
+    "noticeOfExpiration": {
+      "slaId": "SLA-RECERT-001",
+      "before": "first_day_of_last_month_of_certification",
+      "citation": "7 CFR 273.14"
+    },
+    "applicationDeadline": {
+      "slaId": "SLA-RECERT-002",
+      "by": "15th_of_last_month_of_certification",
+      "citation": "7 CFR 273.14"
+    }
+  }
+}
