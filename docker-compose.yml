@@ -1,0 +1,38 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: casework-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: casework
+      POSTGRES_PASSWORD: casework_dev_2026
+      POSTGRES_DB: benefits_casework
+    ports:
+      - "5436:5432"
+    volumes:
+      - casework_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U casework -d benefits_casework"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: casework-redis
+    restart: unless-stopped
+    ports:
+      - "6381:6379"
+    volumes:
+      - casework_redis:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  casework_pgdata:
+    name: casework_pgdata
+  casework_redis:
+    name: casework_redis
