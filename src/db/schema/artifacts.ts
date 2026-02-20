@@ -1,13 +1,13 @@
 import { pgTable, uuid, text, timestamp, jsonb } from 'drizzle-orm/pg-core';
 import { cases } from './cases';
+import { events } from './events';
 
-export const events = pgTable('events', {
+export const artifacts = pgTable('artifacts', {
   id: uuid('id').primaryKey().defaultRandom(),
   caseId: uuid('case_id').notNull().references(() => cases.id),
-  actor: text('actor').notNull(),
-  action: text('action').notNull(),
-  payload: jsonb('payload'),
-  citations: text('citations').array(),
-  artifactId: uuid('artifact_id'),
+  eventId: uuid('event_id').notNull().references(() => events.id),
+  type: text('type').notNull(),
+  content: jsonb('content').notNull(),
+  citations: text('citations').array().notNull(),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
