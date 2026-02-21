@@ -6,6 +6,8 @@ import {
   GUARDS,
   guardVerificationComplete,
   guardSlaVerMinDays,
+  guardAppealDeadline,
+  guardHearingNotice,
   checkGuards,
   transition,
   type CaseAction,
@@ -443,5 +445,175 @@ describe('transition()', () => {
       if (!result.ok) throw new Error(result.error);
       expect(result.newState).toBe('CLOSED');
     });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Appeal Transitions
+// ---------------------------------------------------------------------------
+
+describe('appeal transitions', () => {
+  it('appeal_filed: NOTICE_SENT -> APPEAL_REQUESTED within 90 days', () => {
+    const ctx = makeCtx({
+      currentState: 'NOTICE_SENT',
+      actor: { role: 'system', agentId: 'system-1' },
+      timestamp: new Date('2026-02-15'),
+      caseData: makeCaseData({
+        noticeSentAt: new Date('2026-01-01'),
+      }),
+    });
+    const result = transition('NOTICE_SENT', 'appeal_filed', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('APPEAL_REQUESTED');
+    }
+  });
+
+  it('appeal_filed: blocked after 90 days', () => {
+    const ctx = makeCtx({
+      currentState: 'NOTICE_SENT',
+      actor: { role: 'system', agentId: 'system-1' },
+      timestamp: new Date('2026-06-01'), // well past 90 days from Jan 1
+      caseData: makeCaseData({
+        noticeSentAt: new Date('2026-01-01'),
+      }),
+    });
+    const result = transition('NOTICE_SENT', 'appeal_filed', ctx);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('Guard(s) failed');
+      expect(result.guardResults).toBeDefined();
+      expect(result.guardResults!.some((g) => g.guardName === 'guardAppealDeadline' && !g.passed)).toBe(true);
+    }
+  });
+
+  it('schedule_hearing: APPEAL_REQUESTED -> APPEAL_HEARING_SCHEDULED', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_REQUESTED',
+      actor: { role: 'supervisor', agentId: 'super-1' },
+      timestamp: new Date('2026-02-20'),
+      caseData: makeCaseData(),
+    });
+    const result = transition('APPEAL_REQUESTED', 'schedule_hearing', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('APPEAL_HEARING_SCHEDULED');
+    }
+  });
+
+  it('render_decision: APPEAL_HEARING_SCHEDULED -> APPEAL_DECIDED (10+ days after scheduling)', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_HEARING_SCHEDULED',
+      actor: { role: 'hearing_officer', agentId: 'ho-1' },
+      timestamp: new Date('2026-03-15'),
+      caseData: makeCaseData({
+        hearingScheduledAt: new Date('2026-02-20'),
+        hearingDate: new Date('2026-03-10'), // 18 days after scheduling
+      }),
+    });
+    const result = transition('APPEAL_HEARING_SCHEDULED', 'render_decision', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('APPEAL_DECIDED');
+    }
+  });
+
+  it('render_decision: blocked if hearing < 10 days after scheduling', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_HEARING_SCHEDULED',
+      actor: { role: 'hearing_officer', agentId: 'ho-1' },
+      timestamp: new Date('2026-03-01'),
+      caseData: makeCaseData({
+        hearingScheduledAt: new Date('2026-02-20'),
+        hearingDate: new Date('2026-02-25'), // only 5 days after scheduling
+      }),
+    });
+    const result = transition('APPEAL_HEARING_SCHEDULED', 'render_decision', ctx);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('Guard(s) failed');
+      expect(result.guardResults).toBeDefined();
+      expect(result.guardResults!.some((g) => g.guardName === 'guardHearingNotice' && !g.passed)).toBe(true);
+    }
+  });
+
+  it('implement_favorable: APPEAL_DECIDED -> IMPLEMENTED', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_DECIDED',
+      actor: { role: 'supervisor', agentId: 'super-1' },
+      timestamp: new Date('2026-03-20'),
+      caseData: makeCaseData({
+        appealDecision: 'favorable',
+      }),
+    });
+    const result = transition('APPEAL_DECIDED', 'implement_favorable', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('IMPLEMENTED');
+    }
+  });
+
+  it('implement_unfavorable: APPEAL_DECIDED -> IMPLEMENTED', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_DECIDED',
+      actor: { role: 'supervisor', agentId: 'super-1' },
+      timestamp: new Date('2026-03-20'),
+      caseData: makeCaseData({
+        appealDecision: 'unfavorable',
+      }),
+    });
+    const result = transition('APPEAL_DECIDED', 'implement_unfavorable', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('IMPLEMENTED');
+    }
+  });
+
+  it('reopen_case: APPEAL_DECIDED -> READY_FOR_DETERMINATION', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_DECIDED',
+      actor: { role: 'supervisor', agentId: 'super-1' },
+      timestamp: new Date('2026-03-20'),
+      caseData: makeCaseData({
+        appealDecision: 'remand',
+      }),
+    });
+    const result = transition('APPEAL_DECIDED', 'reopen_case', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('READY_FOR_DETERMINATION');
+    }
+  });
+
+  it('role check: caseworker cannot schedule hearing', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_REQUESTED',
+      actor: { role: 'caseworker', agentId: 'worker-1' },
+      timestamp: new Date('2026-02-20'),
+      caseData: makeCaseData(),
+    });
+    const result = transition('APPEAL_REQUESTED', 'schedule_hearing', ctx);
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toContain('not permitted');
+      expect(result.error).toContain('caseworker');
+    }
+  });
+
+  it('role check: hearing_officer can render_decision', () => {
+    const ctx = makeCtx({
+      currentState: 'APPEAL_HEARING_SCHEDULED',
+      actor: { role: 'hearing_officer', agentId: 'ho-1' },
+      timestamp: new Date('2026-03-15'),
+      caseData: makeCaseData({
+        hearingScheduledAt: new Date('2026-02-20'),
+        hearingDate: new Date('2026-03-10'),
+      }),
+    });
+    const result = transition('APPEAL_HEARING_SCHEDULED', 'render_decision', ctx);
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.newState).toBe('APPEAL_DECIDED');
+    }
   });
 });

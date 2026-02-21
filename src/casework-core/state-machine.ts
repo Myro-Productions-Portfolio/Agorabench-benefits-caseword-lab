@@ -17,6 +17,13 @@ export interface CaseData {
   verificationRequestedAt?: Date;
   applicationFiledAt: Date;
   determinationResult?: 'approved' | 'denied';
+  noticeSentAt?: Date;
+  appealFiledAt?: Date;
+  appealReason?: string;
+  hearingScheduledAt?: Date;
+  hearingDate?: Date;
+  appealDecision?: 'favorable' | 'unfavorable' | 'remand';
+  originalDenialReason?: string;
 }
 
 export interface TransitionContext {
@@ -72,6 +79,12 @@ export const ROLE_PERMISSIONS: Record<CaseAction, readonly Role[]> = {
   implement: ['supervisor'],
   close_case: ['supervisor'],
   close_abandoned: ['system'],
+  appeal_filed: ['system'],
+  schedule_hearing: ['supervisor'],
+  render_decision: ['supervisor', 'hearing_officer'],
+  implement_favorable: ['supervisor'],
+  implement_unfavorable: ['supervisor'],
+  reopen_case: ['supervisor'],
 };
 
 // ---------------------------------------------------------------------------
@@ -102,6 +115,18 @@ export const TRANSITION_TABLE: Partial<
   },
   NOTICE_SENT: {
     implement: 'IMPLEMENTED',
+    appeal_filed: 'APPEAL_REQUESTED',
+  },
+  APPEAL_REQUESTED: {
+    schedule_hearing: 'APPEAL_HEARING_SCHEDULED',
+  },
+  APPEAL_HEARING_SCHEDULED: {
+    render_decision: 'APPEAL_DECIDED',
+  },
+  APPEAL_DECIDED: {
+    implement_favorable: 'IMPLEMENTED',
+    implement_unfavorable: 'IMPLEMENTED',
+    reopen_case: 'READY_FOR_DETERMINATION',
   },
   IMPLEMENTED: {
     close_case: 'CLOSED',
@@ -170,6 +195,48 @@ export function guardSlaVerMinDays(ctx: TransitionContext): GuardResult {
 }
 
 /**
+ * SLA-APP-001: Appeal must be filed within 90 calendar days of notice.
+ */
+export function guardAppealDeadline(ctx: TransitionContext): GuardResult {
+  const { noticeSentAt } = ctx.caseData;
+  if (!noticeSentAt) {
+    return { guardName: 'guardAppealDeadline', passed: false, reason: 'No notice sent date recorded', citation: 'SLA-APP-001' };
+  }
+  const elapsed = ctx.timestamp.getTime() - noticeSentAt.getTime();
+  const ninetyDaysMs = 90 * 24 * 60 * 60 * 1000;
+  if (elapsed <= ninetyDaysMs) {
+    return { guardName: 'guardAppealDeadline', passed: true, citation: 'SLA-APP-001' };
+  }
+  return {
+    guardName: 'guardAppealDeadline',
+    passed: false,
+    reason: `Appeal filed ${Math.floor(elapsed / (24 * 60 * 60 * 1000))} days after notice (max 90)`,
+    citation: 'SLA-APP-001',
+  };
+}
+
+/**
+ * SLA-APP-002: Hearing date must be at least 10 days after scheduling.
+ */
+export function guardHearingNotice(ctx: TransitionContext): GuardResult {
+  const { hearingScheduledAt, hearingDate } = ctx.caseData;
+  if (!hearingScheduledAt || !hearingDate) {
+    return { guardName: 'guardHearingNotice', passed: false, reason: 'Hearing scheduling date or hearing date not recorded', citation: 'SLA-APP-002' };
+  }
+  const elapsed = hearingDate.getTime() - hearingScheduledAt.getTime();
+  const tenDaysMs = 10 * 24 * 60 * 60 * 1000;
+  if (elapsed >= tenDaysMs) {
+    return { guardName: 'guardHearingNotice', passed: true, citation: 'SLA-APP-002' };
+  }
+  return {
+    guardName: 'guardHearingNotice',
+    passed: false,
+    reason: `Hearing only ${Math.floor(elapsed / (24 * 60 * 60 * 1000))} days after scheduling (min 10)`,
+    citation: 'SLA-APP-002',
+  };
+}
+
+/**
  * Map of action -> guard functions that must ALL pass.
  */
 export const GUARDS: Record<CaseAction, GuardFn[]> = {
@@ -184,6 +251,12 @@ export const GUARDS: Record<CaseAction, GuardFn[]> = {
   implement: [],
   close_case: [],
   close_abandoned: [],
+  appeal_filed: [guardAppealDeadline],
+  schedule_hearing: [],
+  render_decision: [guardHearingNotice],
+  implement_favorable: [],
+  implement_unfavorable: [],
+  reopen_case: [],
 };
 
 /**
