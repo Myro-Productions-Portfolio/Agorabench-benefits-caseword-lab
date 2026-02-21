@@ -4,8 +4,10 @@ import { runs } from '@db/schema/runs';
 import { qaMismatches } from '@db/schema/qa-mismatches';
 import { eq, desc } from 'drizzle-orm';
 import { generateMissingDocsCases } from '@core/scenarios/missing-docs';
-import { runMissingDocsScenario } from '@core/runner';
+import { generateAppealReversalCases } from '@core/scenarios/appeal-reversal';
+import { runMissingDocsScenario, runAppealReversalScenario } from '@core/runner';
 import { computeRunSummary } from '@core/metrics';
+import { appealArtifacts } from '@db/schema/appeal-artifacts';
 import { SCENARIOS } from '@shared/constants';
 
 const router = Router();
@@ -42,8 +44,16 @@ router.post('/', async (req, res) => {
   }
 
   // --- Generate and run scenario ---
-  const cases = generateMissingDocsCases(count, seed);
-  const result = runMissingDocsScenario(cases);
+  let result;
+  if (scenario === 'missing_docs') {
+    const cases = generateMissingDocsCases(count, seed);
+    result = runMissingDocsScenario(cases);
+  } else if (scenario === 'appeal_reversal') {
+    const cases = generateAppealReversalCases(count, seed);
+    result = runAppealReversalScenario(cases);
+  } else {
+    return res.status(400).json({ success: false, error: `Unknown scenario: ${scenario}` });
+  }
   const summary = computeRunSummary(result);
 
   // --- Store in DB ---
@@ -88,6 +98,60 @@ router.post('/', async (req, res) => {
     await db.insert(qaMismatches).values(mismatchRows);
   }
 
+  // Store appeal artifacts
+  if (scenario === 'appeal_reversal') {
+    const artifactRows: {
+      runId: string;
+      runnerCaseId: string;
+      artifactType: string;
+      data: unknown;
+    }[] = [];
+
+    for (const cr of result.caseResults) {
+      const appealFiledEvent = cr.events.find(e => e.action === 'appeal_filed');
+      const decisionEvent = cr.events.find(e => e.action === 'render_decision');
+
+      if (appealFiledEvent) {
+        artifactRows.push({
+          runId: run.id,
+          runnerCaseId: cr.caseId,
+          artifactType: 'appeal_request',
+          data: {
+            appealId: cr.caseId + '-appeal',
+            caseId: cr.caseId,
+            filedAt: appealFiledEvent.timestamp,
+            reason: cr.variant,
+            citedErrors: [],
+            requestedRelief: 'Reconsideration of denial',
+          },
+        });
+      }
+
+      if (decisionEvent) {
+        artifactRows.push({
+          runId: run.id,
+          runnerCaseId: cr.caseId,
+          artifactType: 'appeal_decision',
+          data: {
+            decisionId: cr.caseId + '-decision',
+            caseId: cr.caseId,
+            outcome: cr.variant === 'favorable_reversal' ? 'favorable'
+              : cr.variant === 'unfavorable_upheld' ? 'unfavorable'
+              : 'remand',
+            reasoning: `Decision for ${cr.variant} case`,
+            citedRegulations: ['7 CFR 273.15'],
+            orderText: `Appeal ${cr.variant === 'favorable_reversal' ? 'granted' : cr.variant === 'unfavorable_upheld' ? 'denied' : 'remanded'}`,
+            implementationDeadline: decisionEvent.timestamp,
+          },
+        });
+      }
+    }
+
+    if (artifactRows.length > 0) {
+      await db.insert(appealArtifacts).values(artifactRows);
+    }
+  }
+
   res.status(201).json({
     success: true,
     data: { run, summary },
@@ -114,6 +178,15 @@ router.get('/:id/mismatches', async (req, res) => {
     : rows;
 
   res.json({ success: true, data: filtered });
+});
+
+// GET /runs/:id/appeal-artifacts
+router.get('/:id/appeal-artifacts', async (req, res) => {
+  const rows = await db
+    .select()
+    .from(appealArtifacts)
+    .where(eq(appealArtifacts.runId, req.params.id));
+  res.json({ success: true, data: rows });
 });
 
 // GET /runs/:id -- get a single run
