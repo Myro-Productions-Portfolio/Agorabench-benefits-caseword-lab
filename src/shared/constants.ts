@@ -56,3 +56,5 @@ export const ROLES = [
   'supervisor',
   'system',
 ] as const;
+
+export const SCENARIOS = ['missing_docs'] as const;

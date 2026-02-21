@@ -44,3 +44,23 @@ export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
 }
+
+export interface RunSummaryRecord {
+  totalCases: number;
+  byVariant: Record<string, number>;
+  byOutcome: { approved: number; denied: number; abandoned: number };
+  slaCompliance: { onTime: number; breached: number; breachRate: number };
+  averageTimeToDecision: number;
+  noticeCompleteness: number;
+  citationCoverage: number;
+  errors: { caseId: string; error: string }[];
+}
+
+export interface RunRecord {
+  id: string;
+  scenario: string;
+  seed: number;
+  count: number;
+  summary: RunSummaryRecord | null;
+  createdAt: string;
+}
