@@ -35,4 +35,11 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     }),
+  startRun: (scenario: string, count: number, seed?: number) =>
+    request('/runs', {
+      method: 'POST',
+      body: JSON.stringify({ scenario, count, seed }),
+    }),
+  getRuns: () => request('/runs'),
+  getRun: (id: string) => request(`/runs/${id}`),
 };

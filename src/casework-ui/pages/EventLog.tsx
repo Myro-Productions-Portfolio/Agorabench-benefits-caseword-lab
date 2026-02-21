@@ -5,6 +5,8 @@ import { WS_EVENTS } from '@shared/constants';
 import type { EventRecord, ArtifactRecord } from '@shared/types';
 import { ArtifactViewer } from '@ui/components/ArtifactViewer';
 import { CreateCaseForm } from '@ui/components/CreateCaseForm';
+import { RunScenarioForm } from '@ui/components/RunScenarioForm';
+import { RunSummaryCard } from '@ui/components/RunSummaryCard';
 
 interface EventWithArtifact extends EventRecord {
   artifact?: ArtifactRecord | null;
@@ -14,6 +16,7 @@ export function EventLog() {
   const [events, setEvents] = useState<EventWithArtifact[]>([]);
   const [ruleIds, setRuleIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [runSummary, setRunSummary] = useState<any>(null);
 
   useEffect(() => {
     (async () => {
@@ -69,8 +72,13 @@ export function EventLog() {
     <div className="max-w-3xl mx-auto px-4 py-8">
       <div className="flex items-center justify-between mb-8">
         <h1 className="text-2xl font-semibold">Benefits Casework Lab</h1>
-        <CreateCaseForm ruleIds={ruleIds} onCreated={() => {}} />
+        <div className="flex items-center gap-2">
+          <CreateCaseForm ruleIds={ruleIds} onCreated={() => {}} />
+          <RunScenarioForm onComplete={setRunSummary} />
+        </div>
       </div>
+
+      {runSummary && <RunSummaryCard summary={runSummary} />}
 
       <h2 className="text-lg font-medium mb-4 text-gray-400">Event Log</h2>
 
@@ -103,6 +111,15 @@ export function EventLog() {
                 <span className="text-gray-500">actor:</span> {ev.actor}
                 <span className="ml-3 text-gray-500">case:</span> {ev.caseId.slice(0, 8)}...
               </div>
+
+              {ev.payload && typeof ev.payload === 'object' && 'fromState' in ev.payload && 'toState' in ev.payload && (
+                <div className="text-xs mt-1">
+                  <span className="text-gray-600">state:</span>{' '}
+                  <span className="text-orange-400 font-mono">{String((ev.payload as any).fromState)}</span>
+                  <span className="text-gray-600 mx-1">&rarr;</span>
+                  <span className="text-green-400 font-mono">{String((ev.payload as any).toState)}</span>
+                </div>
+              )}
 
               {ev.citations && ev.citations.length > 0 && (
                 <div className="flex flex-wrap gap-1 mt-2">
