@@ -15,6 +15,13 @@ interface RunSummaryData {
     mismatchCount: number;
     mismatchesBySeverity: Record<string, number>;
   };
+  appealMetrics?: {
+    casesAppealed: number;
+    favorableRate: number;
+    unfavorableRate: number;
+    remandRate: number;
+    avgTimeToDecision: number;
+  };
 }
 
 interface Props {
@@ -26,7 +33,9 @@ export function RunSummaryCard({ summary }: Props) {
 
   return (
     <div className="bg-gray-900 border border-gray-700 rounded-lg p-4 mb-6">
-      <h3 className="text-sm font-medium text-gray-300 mb-3">Run Results: Missing Docs Scenario</h3>
+      <h3 className="text-sm font-medium text-gray-300 mb-3">
+        Run Results{summary.appealMetrics ? ': Appeal Reversal' : ': Missing Docs'}
+      </h3>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
         <div>
           <div className="text-2xl font-bold text-white">{summary.totalCases}</div>
@@ -90,6 +99,35 @@ export function RunSummaryCard({ summary }: Props) {
                   {sev}: {cnt}
                 </span>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {summary.appealMetrics && (
+        <div className="mt-3 pt-3 border-t border-gray-700">
+          <h4 className="text-xs font-medium text-gray-400 mb-2">Appeal Outcomes</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Cases Appealed:</span>{' '}
+              <span className="text-white">{summary.appealMetrics.casesAppealed}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Favorable:</span>{' '}
+              <span className="text-green-400">
+                {(summary.appealMetrics.favorableRate * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Unfavorable:</span>{' '}
+              <span className="text-red-400">
+                {(summary.appealMetrics.unfavorableRate * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Remand:</span>{' '}
+              <span className="text-yellow-400">
+                {(summary.appealMetrics.remandRate * 100).toFixed(0)}%
+              </span>
             </div>
           </div>
         </div>

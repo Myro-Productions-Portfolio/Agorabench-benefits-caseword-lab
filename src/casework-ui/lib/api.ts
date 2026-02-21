@@ -44,6 +44,8 @@ export const api = {
   getRun: (id: string) => request(`/runs/${id}`),
   getRunMismatches: (runId: string, severity?: string) =>
     request(`/runs/${runId}/mismatches${severity ? `?severity=${severity}` : ''}`),
+  getRunAppealArtifacts: (runId: string) =>
+    request(`/runs/${runId}/appeal-artifacts`),
   evaluateOracle: (input: unknown) =>
     request('/oracle/evaluate', {
       method: 'POST',

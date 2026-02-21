@@ -62,6 +62,13 @@ export interface RunSummaryRecord {
     mismatchCount: number;
     mismatchesBySeverity: Record<string, number>;
   };
+  appealMetrics?: {
+    casesAppealed: number;
+    favorableRate: number;
+    unfavorableRate: number;
+    remandRate: number;
+    avgTimeToDecision: number;
+  };
 }
 
 export interface RunRecord {
