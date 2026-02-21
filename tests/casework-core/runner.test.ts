@@ -95,4 +95,49 @@ describe('runMissingDocsScenario', () => {
       expect(cr.events.length).toBeGreaterThanOrEqual(2);
     }
   });
+
+  describe('oracle integration', () => {
+    it('approved cases have oracleOutput', () => {
+      const cases = generateMissingDocsCases(20, 42);
+      const result = runMissingDocsScenario(cases);
+      const approved = result.caseResults.filter(c => c.outcome === 'approved');
+      expect(approved.length).toBeGreaterThan(0);
+      for (const c of approved) {
+        expect(c.oracleOutput).toBeDefined();
+        expect(c.oracleComparison).toBeDefined();
+      }
+    });
+
+    it('denied cases have oracleOutput', () => {
+      const cases = generateMissingDocsCases(50, 42);
+      const result = runMissingDocsScenario(cases);
+      const denied = result.caseResults.filter(c => c.outcome === 'denied');
+      expect(denied.length).toBeGreaterThan(0);
+      for (const c of denied) {
+        expect(c.oracleOutput).toBeDefined();
+        expect(c.oracleComparison).toBeDefined();
+      }
+    });
+
+    it('abandoned cases do NOT have oracleOutput', () => {
+      const cases = generateMissingDocsCases(50, 42);
+      const result = runMissingDocsScenario(cases);
+      const abandoned = result.caseResults.filter(c => c.outcome === 'abandoned');
+      for (const c of abandoned) {
+        expect(c.oracleOutput).toBeUndefined();
+      }
+    });
+
+    it('oracle comparison has correct structure', () => {
+      const cases = generateMissingDocsCases(20, 42);
+      const result = runMissingDocsScenario(cases);
+      const withComparison = result.caseResults.filter(c => c.oracleComparison);
+      expect(withComparison.length).toBeGreaterThan(0);
+      for (const c of withComparison) {
+        expect(typeof c.oracleComparison!.eligibilityMatch).toBe('boolean');
+        expect(typeof c.oracleComparison!.benefitDelta).toBe('number');
+        expect(typeof c.oracleComparison!.citationsCovered).toBe('boolean');
+      }
+    });
+  });
 });

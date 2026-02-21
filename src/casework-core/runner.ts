@@ -1,4 +1,7 @@
 import { randomUUID } from 'crypto';
+import { readFileSync } from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import { transition } from './state-machine';
 import type {
   TransitionContext,
@@ -8,6 +11,8 @@ import type {
   CaseStatus,
 } from './state-machine';
 import type { MissingDocsCase, MissingDocsVariant } from './scenarios/missing-docs';
+import { computeEligibility, type OracleOutput, type PolicyPackRules } from './oracle';
+import { compareWithOracle, type OracleComparison, type MismatchRecord } from './oracle-comparison';
 
 // ---------------------------------------------------------------------------
 // Public interfaces
@@ -34,6 +39,9 @@ export interface CaseResult {
   events: RunEvent[];
   slaBreaches: string[];
   timeToDecisionDays: number | null;
+  oracleOutput?: OracleOutput;
+  oracleComparison?: OracleComparison;
+  mismatches?: MismatchRecord[];
 }
 
 export interface RunResult {
@@ -190,6 +198,26 @@ function buildRuleIndex(): Set<string> {
 }
 
 // ---------------------------------------------------------------------------
+// Lazy-load policy-pack rules for oracle
+// ---------------------------------------------------------------------------
+
+const __filename_runner = fileURLToPath(import.meta.url);
+const __dirname_runner = path.dirname(__filename_runner);
+
+let _rules: PolicyPackRules | null = null;
+function loadRules(): PolicyPackRules {
+  if (!_rules) {
+    _rules = JSON.parse(
+      readFileSync(
+        path.join(__dirname_runner, '../../policy-packs/snap-illinois-fy2026-v1/rules.json'),
+        'utf-8',
+      ),
+    ) as PolicyPackRules;
+  }
+  return _rules;
+}
+
+// ---------------------------------------------------------------------------
 // Single-case runner
 // ---------------------------------------------------------------------------
 
@@ -287,15 +315,41 @@ function runSingleCase(caseConfig: MissingDocsCase): CaseResult {
       ? daysBetween(applicationDate, determinationDate)
       : null;
 
+  // Oracle evaluation (skip abandoned cases)
+  let oracleOutput: OracleOutput | undefined;
+  let oracleComparison: OracleComparison | undefined;
+  let mismatches: MismatchRecord[] | undefined;
+
+  const outcome = outcomeForVariant(caseConfig.variant);
+
+  if (caseConfig.oracleInput && outcome !== 'abandoned') {
+    const rules = loadRules();
+    oracleOutput = computeEligibility(caseConfig.oracleInput, rules);
+
+    // Runner doesn't compute benefit amounts -- pass 0 for natural mismatches
+    const runnerCitations = events.flatMap(e => e.citations);
+    const result = compareWithOracle(
+      outcome === 'approved' ? 'approved' : 'denied',
+      0, // runner has no benefit calculation
+      runnerCitations,
+      oracleOutput,
+    );
+    oracleComparison = result.comparison;
+    mismatches = result.mismatches;
+  }
+
   return {
     caseId,
     variant: caseConfig.variant,
     applicantName: caseConfig.applicantName,
     finalState: currentState,
-    outcome: outcomeForVariant(caseConfig.variant),
+    outcome,
     events,
     slaBreaches: slaBreachesForVariant(caseConfig.variant),
     timeToDecisionDays,
+    oracleOutput,
+    oracleComparison,
+    mismatches,
   };
 }
 
