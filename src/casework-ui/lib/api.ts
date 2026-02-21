@@ -42,4 +42,11 @@ export const api = {
     }),
   getRuns: () => request('/runs'),
   getRun: (id: string) => request(`/runs/${id}`),
+  getRunMismatches: (runId: string, severity?: string) =>
+    request(`/runs/${runId}/mismatches${severity ? `?severity=${severity}` : ''}`),
+  evaluateOracle: (input: unknown) =>
+    request('/oracle/evaluate', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    }),
 };

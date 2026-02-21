@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '@ui/lib/api';
 
 interface Props {
-  onComplete: (summary: any) => void;
+  onComplete: (summary: any, data?: any) => void;
 }
 
 export function RunScenarioForm({ onComplete }: Props) {
@@ -15,7 +15,7 @@ export function RunScenarioForm({ onComplete }: Props) {
     const res = await api.startRun('missing_docs', count);
     setRunning(false);
     if (res.success && res.data) {
-      onComplete((res.data as any).summary);
+      onComplete((res.data as any).summary, res.data);
       setOpen(false);
     }
   };

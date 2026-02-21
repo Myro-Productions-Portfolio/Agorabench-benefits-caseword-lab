@@ -7,6 +7,7 @@ import { ArtifactViewer } from '@ui/components/ArtifactViewer';
 import { CreateCaseForm } from '@ui/components/CreateCaseForm';
 import { RunScenarioForm } from '@ui/components/RunScenarioForm';
 import { RunSummaryCard } from '@ui/components/RunSummaryCard';
+import { MismatchList } from '@ui/components/MismatchList';
 
 interface EventWithArtifact extends EventRecord {
   artifact?: ArtifactRecord | null;
@@ -17,6 +18,7 @@ export function EventLog() {
   const [ruleIds, setRuleIds] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [runSummary, setRunSummary] = useState<any>(null);
+  const [runId, setRunId] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -74,11 +76,15 @@ export function EventLog() {
         <h1 className="text-2xl font-semibold">Benefits Casework Lab</h1>
         <div className="flex items-center gap-2">
           <CreateCaseForm ruleIds={ruleIds} onCreated={() => {}} />
-          <RunScenarioForm onComplete={setRunSummary} />
+          <RunScenarioForm onComplete={(summary: any, data?: any) => {
+            setRunSummary(summary);
+            if (data?.run?.id) setRunId(data.run.id);
+          }} />
         </div>
       </div>
 
       {runSummary && <RunSummaryCard summary={runSummary} />}
+      {runId && <MismatchList runId={runId} />}
 
       <h2 className="text-lg font-medium mb-4 text-gray-400">Event Log</h2>
 

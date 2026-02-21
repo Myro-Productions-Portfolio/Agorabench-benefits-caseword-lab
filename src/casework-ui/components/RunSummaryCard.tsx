@@ -7,6 +7,14 @@ interface RunSummaryData {
   noticeCompleteness: number;
   citationCoverage: number;
   errors: { caseId: string; error: string }[];
+  oracleMetrics?: {
+    casesEvaluated: number;
+    eligibilityMatchRate: number;
+    benefitExactMatchRate: number;
+    averageBenefitDelta: number;
+    mismatchCount: number;
+    mismatchesBySeverity: Record<string, number>;
+  };
 }
 
 interface Props {
@@ -54,6 +62,38 @@ export function RunSummaryCard({ summary }: Props) {
           <span className="text-green-400">{(citationCoverage * 100).toFixed(0)}%</span>
         </div>
       </div>
+      {summary.oracleMetrics && (
+        <div className="mt-3 pt-3 border-t border-gray-700">
+          <h4 className="text-xs font-medium text-gray-400 mb-2">Oracle Accuracy</h4>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <span className="text-gray-500">Eligibility Match:</span>{' '}
+              <span className={summary.oracleMetrics.eligibilityMatchRate < 0.8 ? 'text-red-400' : 'text-green-400'}>
+                {(summary.oracleMetrics.eligibilityMatchRate * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Benefit Match:</span>{' '}
+              <span className={summary.oracleMetrics.benefitExactMatchRate < 0.5 ? 'text-yellow-400' : 'text-green-400'}>
+                {(summary.oracleMetrics.benefitExactMatchRate * 100).toFixed(0)}%
+              </span>
+            </div>
+            <div>
+              <span className="text-gray-500">Avg Benefit Delta:</span>{' '}
+              <span className="text-white">${summary.oracleMetrics.averageBenefitDelta.toFixed(0)}</span>
+            </div>
+            <div>
+              <span className="text-gray-500">Mismatches:</span>{' '}
+              <span className="text-yellow-400">{summary.oracleMetrics.mismatchCount}</span>
+              {Object.entries(summary.oracleMetrics.mismatchesBySeverity).map(([sev, cnt]) => (
+                <span key={sev} className="text-gray-600 text-xs ml-1">
+                  {sev}: {cnt}
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
       {summary.errors.length > 0 && (
         <div className="mt-3 text-xs text-red-400">{summary.errors.length} error(s) during run</div>
       )}
