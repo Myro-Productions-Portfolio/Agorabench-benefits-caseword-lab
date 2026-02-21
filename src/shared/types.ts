@@ -54,6 +54,14 @@ export interface RunSummaryRecord {
   noticeCompleteness: number;
   citationCoverage: number;
   errors: { caseId: string; error: string }[];
+  oracleMetrics?: {
+    casesEvaluated: number;
+    eligibilityMatchRate: number;
+    benefitExactMatchRate: number;
+    averageBenefitDelta: number;
+    mismatchCount: number;
+    mismatchesBySeverity: Record<string, number>;
+  };
 }
 
 export interface RunRecord {
