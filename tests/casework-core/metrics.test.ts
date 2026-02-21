@@ -43,4 +43,19 @@ describe('run metrics', () => {
   it('breachRate > 0 because some variants breach SLA', () => {
     expect(summary.slaCompliance.breached).toBeGreaterThan(0);
   });
+
+  describe('oracle metrics', () => {
+    it('computes oracle metrics from run results', () => {
+      const cases = generateMissingDocsCases(50, 42);
+      const result = runMissingDocsScenario(cases);
+      const summary = computeRunSummary(result);
+
+      expect(summary.oracleMetrics).toBeDefined();
+      expect(summary.oracleMetrics.casesEvaluated).toBeGreaterThan(0);
+      expect(summary.oracleMetrics.eligibilityMatchRate).toBeGreaterThanOrEqual(0);
+      expect(summary.oracleMetrics.eligibilityMatchRate).toBeLessThanOrEqual(1);
+      expect(typeof summary.oracleMetrics.mismatchCount).toBe('number');
+      expect(typeof summary.oracleMetrics.mismatchesBySeverity).toBe('object');
+    });
+  });
 });

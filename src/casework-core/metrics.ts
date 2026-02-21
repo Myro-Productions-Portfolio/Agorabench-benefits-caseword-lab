@@ -13,6 +13,14 @@ export interface RunSummary {
   noticeCompleteness: number;
   citationCoverage: number;
   errors: { caseId: string; error: string }[];
+  oracleMetrics: {
+    casesEvaluated: number;
+    eligibilityMatchRate: number;
+    benefitExactMatchRate: number;
+    averageBenefitDelta: number;
+    mismatchCount: number;
+    mismatchesBySeverity: Record<string, number>;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -71,6 +79,38 @@ export function computeRunSummary(result: RunResult): RunSummary {
     error: e.error,
   }));
 
+  // Oracle accuracy metrics
+  let casesEvaluated = 0;
+  let eligibilityMatches = 0;
+  let benefitMatches = 0;
+  let totalBenefitDelta = 0;
+  let totalMismatches = 0;
+  const mismatchesBySeverity: Record<string, number> = {};
+
+  for (const cr of result.caseResults) {
+    if (cr.oracleComparison) {
+      casesEvaluated++;
+      if (cr.oracleComparison.eligibilityMatch) eligibilityMatches++;
+      if (cr.oracleComparison.benefitMatch) benefitMatches++;
+      totalBenefitDelta += Math.abs(cr.oracleComparison.benefitDelta);
+    }
+    if (cr.mismatches) {
+      totalMismatches += cr.mismatches.length;
+      for (const m of cr.mismatches) {
+        mismatchesBySeverity[m.severity] = (mismatchesBySeverity[m.severity] ?? 0) + 1;
+      }
+    }
+  }
+
+  const oracleMetrics = {
+    casesEvaluated,
+    eligibilityMatchRate: casesEvaluated > 0 ? eligibilityMatches / casesEvaluated : 0,
+    benefitExactMatchRate: casesEvaluated > 0 ? benefitMatches / casesEvaluated : 0,
+    averageBenefitDelta: casesEvaluated > 0 ? totalBenefitDelta / casesEvaluated : 0,
+    mismatchCount: totalMismatches,
+    mismatchesBySeverity,
+  };
+
   return {
     totalCases,
     byVariant,
@@ -80,5 +120,6 @@ export function computeRunSummary(result: RunResult): RunSummary {
     noticeCompleteness,
     citationCoverage,
     errors,
+    oracleMetrics,
   };
 }
