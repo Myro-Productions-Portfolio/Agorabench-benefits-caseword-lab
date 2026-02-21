@@ -21,6 +21,13 @@ export interface RunSummary {
     mismatchCount: number;
     mismatchesBySeverity: Record<string, number>;
   };
+  appealMetrics?: {
+    casesAppealed: number;
+    favorableRate: number;
+    unfavorableRate: number;
+    remandRate: number;
+    avgTimeToDecision: number;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +118,41 @@ export function computeRunSummary(result: RunResult): RunSummary {
     mismatchesBySeverity,
   };
 
+  // Appeal metrics (only for appeal reversal scenarios)
+  const appealVariants = new Set(['favorable_reversal', 'unfavorable_upheld', 'remand_reopened']);
+  const appealCases = result.caseResults.filter(cr => appealVariants.has(cr.variant));
+
+  let appealMetrics: RunSummary['appealMetrics'];
+
+  if (appealCases.length > 0) {
+    let favorableCount = 0;
+    let unfavorableCount = 0;
+    let remandCount = 0;
+    let appealDecisionDays = 0;
+    let appealDecidedCount = 0;
+
+    for (const cr of appealCases) {
+      if (cr.variant === 'favorable_reversal') favorableCount++;
+      if (cr.variant === 'unfavorable_upheld') unfavorableCount++;
+      if (cr.variant === 'remand_reopened') remandCount++;
+
+      if (cr.timeToDecisionDays !== null) {
+        appealDecisionDays += cr.timeToDecisionDays;
+        appealDecidedCount++;
+      }
+    }
+
+    const casesAppealed = appealCases.length;
+
+    appealMetrics = {
+      casesAppealed,
+      favorableRate: casesAppealed > 0 ? favorableCount / casesAppealed : 0,
+      unfavorableRate: casesAppealed > 0 ? unfavorableCount / casesAppealed : 0,
+      remandRate: casesAppealed > 0 ? remandCount / casesAppealed : 0,
+      avgTimeToDecision: appealDecidedCount > 0 ? appealDecisionDays / appealDecidedCount : 0,
+    };
+  }
+
   return {
     totalCases,
     byVariant,
@@ -121,5 +163,6 @@ export function computeRunSummary(result: RunResult): RunSummary {
     citationCoverage,
     errors,
     oracleMetrics,
+    appealMetrics,
   };
 }
