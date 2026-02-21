@@ -98,4 +98,48 @@ describe('generateMissingDocsCases', () => {
       expect(cases[i].caseIndex).toBe(i);
     }
   });
+
+  describe('financial data generation', () => {
+    it('every case has valid oracleInput', () => {
+      const cases = generateMissingDocsCases(50, 42);
+      for (const c of cases) {
+        expect(c.oracleInput).toBeDefined();
+        const oi = c.oracleInput!;
+        expect(oi.householdSize).toBe(c.householdSize);
+        expect(oi.householdMembers).toHaveLength(c.householdSize);
+        expect(oi.income.length).toBeGreaterThanOrEqual(0);
+        expect(oi.resources.length).toBeGreaterThanOrEqual(0);
+        expect(oi.shelterCosts.suaTier).toBeDefined();
+        expect(oi.applicationDate).toBe('2026-01-15');
+      }
+    });
+
+    it('produces diverse income levels across 100 cases', () => {
+      const cases = generateMissingDocsCases(100, 42);
+      const incomes = cases
+        .filter(c => c.oracleInput)
+        .map(c => c.oracleInput!.income.reduce((s, i) => s + i.amount, 0));
+      const hasLow = incomes.some(i => i < 500);
+      const hasHigh = incomes.some(i => i > 2000);
+      expect(hasLow).toBe(true);
+      expect(hasHigh).toBe(true);
+    });
+
+    it('some households have elderly/disabled members', () => {
+      const cases = generateMissingDocsCases(100, 42);
+      const hasElderly = cases.some(c =>
+        c.oracleInput?.householdMembers.some(m => m.age >= 60 || m.isDisabled),
+      );
+      expect(hasElderly).toBe(true);
+    });
+
+    it('deterministic: same seed produces same financial data', () => {
+      const a = generateMissingDocsCases(20, 99);
+      const b = generateMissingDocsCases(20, 99);
+      for (let i = 0; i < 20; i++) {
+        expect(a[i].oracleInput!.income).toEqual(b[i].oracleInput!.income);
+        expect(a[i].oracleInput!.shelterCosts).toEqual(b[i].oracleInput!.shelterCosts);
+      }
+    });
+  });
 });
