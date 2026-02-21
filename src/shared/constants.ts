@@ -16,6 +16,7 @@ export const CASE_STATUSES = [
   'APPEAL_REQUESTED',
   'APPEAL_DECIDED',
   'IMPLEMENTED',
+  'CLOSED',
 ] as const;
 
 export const EVENT_ACTIONS = [
@@ -33,4 +34,25 @@ export const ARTIFACT_TYPES = [
   'verification_request',
   'determination_worksheet',
   'notice',
+] as const;
+
+export const CASE_ACTIONS = [
+  'create_case',
+  'request_verification',
+  'receive_verification',
+  'verification_complete',
+  'verification_refused',
+  'approve',
+  'deny',
+  'send_notice',
+  'implement',
+  'close_case',
+  'close_abandoned',
+] as const;
+
+export const ROLES = [
+  'intake_clerk',
+  'caseworker',
+  'supervisor',
+  'system',
 ] as const;
