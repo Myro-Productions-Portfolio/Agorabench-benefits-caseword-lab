@@ -32,7 +32,7 @@ router.post('/', async (req, res) => {
 
   // --- Defaults and validation ---
   const count = rawCount ?? 100;
-  const seed = rawSeed ?? Date.now();
+  const seed = (rawSeed ?? Date.now()) % 2147483647;
 
   if (count < 1 || count > 1000) {
     return res
