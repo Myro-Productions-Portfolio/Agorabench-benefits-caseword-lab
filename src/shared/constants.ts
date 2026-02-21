@@ -14,6 +14,7 @@ export const CASE_STATUSES = [
   'DETERMINED_DENIED',
   'NOTICE_SENT',
   'APPEAL_REQUESTED',
+  'APPEAL_HEARING_SCHEDULED',
   'APPEAL_DECIDED',
   'IMPLEMENTED',
   'CLOSED',
@@ -28,12 +29,17 @@ export const EVENT_ACTIONS = [
   'NOTICE_GENERATED',
   'APPEAL_FILED',
   'APPEAL_DECIDED',
+  'HEARING_SCHEDULED',
+  'APPEAL_IMPLEMENTED',
 ] as const;
 
 export const ARTIFACT_TYPES = [
   'verification_request',
   'determination_worksheet',
   'notice',
+  'appeal_request',
+  'hearing_record',
+  'appeal_decision',
 ] as const;
 
 export const CASE_ACTIONS = [
@@ -48,13 +54,20 @@ export const CASE_ACTIONS = [
   'implement',
   'close_case',
   'close_abandoned',
+  'appeal_filed',
+  'schedule_hearing',
+  'render_decision',
+  'implement_favorable',
+  'implement_unfavorable',
+  'reopen_case',
 ] as const;
 
 export const ROLES = [
   'intake_clerk',
   'caseworker',
   'supervisor',
+  'hearing_officer',
   'system',
 ] as const;
 
-export const SCENARIOS = ['missing_docs'] as const;
+export const SCENARIOS = ['missing_docs', 'appeal_reversal'] as const;
