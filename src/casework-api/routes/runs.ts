@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { db } from '@db/connection';
 import { runs } from '@db/schema/runs';
+import { qaMismatches } from '@db/schema/qa-mismatches';
 import { eq, desc } from 'drizzle-orm';
 import { generateMissingDocsCases } from '@core/scenarios/missing-docs';
 import { runMissingDocsScenario } from '@core/runner';
@@ -56,6 +57,37 @@ router.post('/', async (req, res) => {
     })
     .returning();
 
+  // --- Store oracle mismatches ---
+  const mismatchRows: {
+    runId: string;
+    runnerCaseId: string;
+    mismatchType: string;
+    severity: string;
+    runnerValue: string;
+    oracleValue: string;
+    detail: unknown;
+  }[] = [];
+
+  for (const cr of result.caseResults) {
+    if (cr.mismatches) {
+      for (const m of cr.mismatches) {
+        mismatchRows.push({
+          runId: run.id,
+          runnerCaseId: cr.caseId,
+          mismatchType: m.mismatchType,
+          severity: m.severity,
+          runnerValue: String(m.runnerValue),
+          oracleValue: String(m.oracleValue),
+          detail: m,
+        });
+      }
+    }
+  }
+
+  if (mismatchRows.length > 0) {
+    await db.insert(qaMismatches).values(mismatchRows);
+  }
+
   res.status(201).json({
     success: true,
     data: { run, summary },
@@ -66,6 +98,22 @@ router.post('/', async (req, res) => {
 router.get('/', async (_req, res) => {
   const rows = await db.select().from(runs).orderBy(desc(runs.createdAt));
   res.json({ success: true, data: rows });
+});
+
+// GET /runs/:id/mismatches -- get mismatches for a run
+router.get('/:id/mismatches', async (req, res) => {
+  const { severity } = req.query as { severity?: string };
+
+  const rows = await db
+    .select()
+    .from(qaMismatches)
+    .where(eq(qaMismatches.runId, req.params.id));
+
+  const filtered = severity
+    ? rows.filter(r => r.severity === severity)
+    : rows;
+
+  res.json({ success: true, data: filtered });
 });
 
 // GET /runs/:id -- get a single run
